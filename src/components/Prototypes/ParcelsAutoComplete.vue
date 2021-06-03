@@ -307,6 +307,8 @@ import { convertXmlDossierToGeoJSON } from '@/modules/codes-cultures/xml-dossier
 import { parseReferences } from '@/cadastre.js'
 import { toCertificationBodySheet, ecocertExcelTemplate, basicExcelTemplate } from '@/certification-body/control-sheet.js'
 import samplePlots from '@/certification-body/sample-plots.json'
+import {mapState, mapActions} from 'vuex';
+import {authenticateWithCredentials} from '@/api/user.js'
 
 const {VUE_APP_API_ENDPOINT} = process.env;
 
@@ -409,7 +411,27 @@ export default {
         this.plots.features.map(feature => prepareFeature({ feature }))
       )
     },
+    ...mapActions('user', ['setProfile']),
+    ...mapState('user', ['apiToken']),
+    ...mapState(['userProfile']),
+  },
 
+  created () {  
+    if (!this.apiToken) {
+      
+    const {login, password} = {login : "cartobio-proto@yopmail.com", password: "Cartobio12345"};
+     
+     authenticateWithCredentials({login, password})
+        .then(({  token, decodedToken, cartobioToken }) => {
+          this.$ls.set("token", token, decodedToken.exp);
+          this.$ls.set("cartobioToken", cartobioToken, decodedToken.exp);
+
+          // for some weird reasons cartobioToken transforms from token to this component object between here and the setProfile method ... 
+          // return this.setProfile(cartobioToken);
+          // for prototype/demo purpose, reloading the page actually log in for the test account, since the token is in localstorage.
+          this.$router.go(0);
+        })
+    }
   },
 
   methods: {
@@ -621,7 +643,8 @@ export default {
 
       const download = toCertificationBodySheet({ featureCollection, operator, template, format })
 
-      download(`cartobio-${operator.id}.${format}`)
+      download(`cartobio-${operator.id}.${format}`);
+      this.sendEmail();
     },
 
     formatFeatures (featureCollection) {
@@ -644,6 +667,50 @@ export default {
       return featureCollection;
     },
 
+    sendEmail () {
+      const {id} = this.operator
+      const {apiToken} = this
+      const {email:userEmail, id:userId, nom:userName, ocId} = this.userProfile
+
+      this.freeText = "Données exportées via le prototype";
+      
+      // const {email:userEmail, id:userId, nom:userName, ocId} = this.userProfile
+      const options = {
+        headers: {
+          Authorization: `Bearer ${apiToken}`
+        }
+      }
+
+      post(`${VUE_APP_API_ENDPOINT}/v1/parcels/operator/${id}`, {
+        uploads: this.uploads(),
+        text: this.freeText,
+        sender: {
+          userId,
+          userEmail,
+          userName,
+          ocId
+        }
+      }, options).then(() => {
+        this.freeText = ''
+        this.isSaved = true
+      }, console.error).finally(() => {
+      })
+    },
+    
+    uploads () {
+      const text = JSON.stringify(this.featureCollection, null, 2)
+      const blob = new Blob([ text ], { type: 'application/json' })
+
+      return [
+        {
+            content: btoa(text),
+            size: blob.size,
+            type: blob.type,
+            filename: 'feature.geojson',
+            disposition: 'attachment'
+          }
+      ]
+    }
   }
 };
 </script>
