@@ -4,11 +4,7 @@
       <autocomplete :default-value="getTownByValue(plot.com)" @submit="({COM}) => plot.com = COM" :search="searchTown" :get-result-value="getTownValue" />
     </span>
 
-    <span v-if="!pacage">
-      <input type="text" v-model="plot.cadastre_suffixes" autocomplete="disabled" />
-    </span>
-
-    <div class="select-wrapper multiple">
+    <div class="select-wrapper multiple crop-type">
       <select item-text="Libellé Culture" item-value="Code Culture" multiple v-model="plot.culture_type">
         <option v-for="item in $data._knownCultures" :key="item['Code Culture']" :value="item['Code Culture']">{{ item['Libellé Culture']}}</option>
       </select>
@@ -172,6 +168,10 @@ export default {
     position: relative;
     width: 100%;
     height: 500px;
+  }
+
+  .crop-type {
+    min-width: 250px;
   }
 
   .grid {

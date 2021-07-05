@@ -36,6 +36,33 @@
 
             <p class="help">Avec MesParcelles, Isagri&nbsp;Geofolia et Smag&nbsp;Farmer.</p>
           </label>
+
+          <section v-if="inputMode === 'import'" class="my-5" id="import">
+            <ul class="pa-0">
+
+              <li>
+                <v-btn outline color="green" round :disabled="isLoading" @click="prefillWithDummyGeofoliaData">
+                  <v-progress-circular v-if="isLoading" size="18" width="2" class="mr-2" indeterminate />
+                  <v-icon v-else small class="mr-2">cloud_upload</v-icon>
+                  import Geofolia
+                </v-btn>
+              </li>
+
+              <li>
+                <v-btn outline round disabled>
+                  <v-icon small class="mr-2">lock</v-icon>
+                  connexion à mon compte MesParcelles
+                </v-btn>
+              </li>
+
+              <li>
+                <v-btn outline round disabled>
+                  <v-icon small class="mr-2">cloud_upload</v-icon>
+                  connexion à mon compte  Smag Farmer
+                </v-btn>
+              </li>
+            </ul>
+          </section>
         </li>
         <li>
           <label class="radio-label">
@@ -45,6 +72,42 @@
 
             <p class="help">Via mon identifiant PACAGE, ou un fichier informatique.</p>
           </label>
+
+          <section v-if="inputMode === 'telepac'" id="telepac" class="my-5">
+            <ul class="pa-0 inline-choices">
+              <li>
+                <label class="label" for="telepac_upload_zip_field">Fichier parcelles (ZIP)</label>
+                <v-btn outline round color="success" :disabled="isLoading" @click="telepacZipPrompt" small>
+                  <input type="file" id="telepac_upload_zip_field" ref="telepac_upload_zip_field" @input="uploadTelepacZIP" accept=".zip,application/zip" hidden>
+                  <v-progress-circular v-if="isLoading" size="18" width="2" class="mr-2" indeterminate />
+                  <v-icon v-else class="mr-2">cloud_upload</v-icon>
+                    {{ operator.pacage ? 'choisir un nouveau fichier' : 'choisir le fichier' }}
+                </v-btn>
+              </li>
+
+              <li>
+                <label class="label" for="telepac_upload_xml_field">Dossier complet (XML)</label>
+                <v-btn outline round color="success" :disabled="isLoading" @click="telepacXmlPrompt" small>
+                  <input type="file" id="telepac_upload_xml_field" ref="telepac_upload_xml_field" @input="uploadTelepacXML" accept=".xml,text/xml" hidden>
+                  <v-progress-circular v-if="isLoading" size="18" width="2" class="mr-2" indeterminate />
+                  <v-icon v-else class="mr-2">cloud_upload</v-icon>
+                    {{ operator.pacage ? 'choisir un nouveau fichier' : 'choisir le fichier' }}
+                </v-btn>
+              </li>
+              <li>
+
+                <label class="label" for="numero_pacage">Numéro PACAGE</label>
+                <div>
+                  <input type="text" class="input" placeholder="000000000" id="numero_pacage" v-model="userInputPacage" pattern="0?\d{8}" autocomplete="disabled" maxlength="9" />
+
+                  <v-btn outline @click="validateUserInputPacage" :disabled="isLoading || userInputPacage.length !== 9">
+                    <v-progress-circular v-if="isLoading" size="18" width="2" class="mr-2" indeterminate />
+                    Importer ce parcellaire
+                  </v-btn>
+                </div>
+              </li>
+            </ul>
+          </section>
         </li>
         <li>
           <label class="radio-label disabled">
@@ -67,85 +130,7 @@
       </ul>
     </article>
 
-    <section v-if="inputMode === 'import'" class="my-5" id="import">
-      <h2 class="headline">
-        Importer depuis un logiciel de gestion agricole
-      </h2>
-
-      <ul class="pa-0">
-        <li>
-          <v-btn outline round disabled>
-            <v-icon small class="mr-2">lock</v-icon>
-            connexion à mon compte MesParcelles
-          </v-btn>
-        </li>
-
-        <li>
-          <v-btn outline round disabled>
-            <v-icon small class="mr-2">lock</v-icon>
-            connexion à mon compte Geofolia
-          </v-btn>
-        </li>
-
-        <li>
-          <v-btn outline round disabled>
-            <v-icon small class="mr-2">cloud_upload</v-icon>
-            import Geofolia (logiciel fonctionnant hors-ligne)
-          </v-btn>
-        </li>
-
-        <li>
-          <v-btn outline round disabled>
-            <v-icon small class="mr-2">cloud_upload</v-icon>
-            import Smag Farmer
-          </v-btn>
-        </li>
-      </ul>
-    </section>
-
-    <section v-if="inputMode === 'telepac'" id="telepac" class="my-5">
-      <h2 class="headline">
-        Import de mon dossier TéléPAC
-      </h2>
-
-      <ul class="pa-0 inline-choices">
-
-
-        <li>
-          <label class="label" for="telepac_upload_zip_field">Fichier parcelles (ZIP)</label>
-          <v-btn outline round color="success" :disabled="isLoading" @click="telepacZipPrompt" small>
-            <input type="file" id="telepac_upload_zip_field" ref="telepac_upload_zip_field" @input="uploadTelepacZIP" accept=".zip,application/zip" hidden>
-            <v-progress-circular v-if="isLoading" size="18" width="2" class="mr-2" indeterminate />
-            <v-icon v-else class="mr-2">cloud_upload</v-icon>
-              {{ operator.pacage ? 'choisir un nouveau fichier' : 'choisir le fichier' }}
-          </v-btn>
-        </li>
-
-        <li>
-          <label class="label" for="telepac_upload_xml_field">Dossier complet (XML)</label>
-          <v-btn outline round color="success" :disabled="isLoading" @click="telepacXmlPrompt" small>
-            <input type="file" id="telepac_upload_xml_field" ref="telepac_upload_xml_field" @input="uploadTelepacXML" accept=".xml,text/xml" hidden>
-            <v-progress-circular v-if="isLoading" size="18" width="2" class="mr-2" indeterminate />
-            <v-icon v-else class="mr-2">cloud_upload</v-icon>
-              {{ operator.pacage ? 'choisir un nouveau fichier' : 'choisir le fichier' }}
-          </v-btn>
-        </li>
-        <li>
-
-          <label class="label" for="numero_pacage">Numéro PACAGE</label>
-          <div>
-            <input type="text" class="input" placeholder="000000000" id="numero_pacage" v-model="userInputPacage" pattern="0?\d{8}" autocomplete="disabled" maxlength="9" />
-
-            <v-btn outline @click="validateUserInputPacage" :disabled="isLoading || userInputPacage.length !== 9">
-              <v-progress-circular v-if="isLoading" size="18" width="2" class="mr-2" indeterminate />
-              Importer ce parcellaire
-            </v-btn>
-          </div>
-        </li>
-      </ul>
-    </section>
-
-    <section id="manuel" class="my-5">
+    <section id="manuel" class="my-5" ref="preview">
       <h2 class="headline" v-if="inputMode === 'manuel'">
         Saisie du parcellaire
       </h2>
@@ -166,7 +151,7 @@
 
       <div v-if="inputMode === 'manuel' || hasAtLeastOneGeometry">
         <div class="my-4">
-          <v-btn color="info" @click="addPlot() || fetchCadastreSheets()">
+          <v-btn color="info" @click="addPlot">
             <v-icon class="mr-2">add_circle_outline</v-icon>
             Ajouter une parcelle
           </v-btn>
@@ -177,9 +162,8 @@
           </v-btn>
         </div>
 
-        <div :class="{ grid: true, 'no-cadastre': operator.pacage }">
+        <div class="grid">
           <span class="header">Commune</span>
-          <span v-if="!operator.pacage" class="header">Références<br>cadastrales</span>
           <span class="header">Type de culture</span>
           <span class="header">Statut de conversion</span>
           <span class="header">Date d'engagement<br>de&nbsp;la&nbsp;parcelle</span>
@@ -190,7 +174,7 @@
         </div>
 
         <div class="my-4">
-          <v-btn color="info" @click="addPlot() || fetchCadastreSheets()">
+          <v-btn color="info" @click="addPlot">
             <v-icon class="mr-2">add_circle_outline</v-icon>
             Ajouter une parcelle
           </v-btn>
@@ -198,13 +182,6 @@
           <v-btn disabled outline color="info">
             <v-icon class="mr-2">add_circle_outline</v-icon>
             Ajouter une zone de rucher
-          </v-btn>
-
-          <br>
-
-          <v-btn color="success" class="mt-3" @click.stop="fetchCadastreSheets" :loading="isLoading">
-            <v-icon class="mr-2">map</v-icon>
-            {{isMapVisible ? 'actualiser la carte' : 'afficher sur une carte'}}
           </v-btn>
         </div>
       </div>
@@ -224,7 +201,6 @@
               <td>Parcelle</td>
               <td>Production végétale</td>
               <td>Date engagement</td>
-              <td v-if="!operator.pacage">Réf cadastrale</td>
               <td>Classement</td>
               <td>Surface graphique</td>
             </tr>
@@ -234,7 +210,6 @@
               <td>{{ id }}</td>
               <td>{{ properties.culture_type.join(', ') }}</td>
               <td>{{ properties.engagement_date }}</td>
-              <td v-if="!operator.pacage">{{ properties.cadastre_references.join(', ') }}</td>
               <td>{{ properties.niveau_conversion }}</td>
               <td>{{ properties.surface ? `${properties.surface}ha` : '?'}}</td>
             </tr>
@@ -304,9 +279,8 @@ import uniqueId from 'lodash/uniqueId'
 import { featureCollection, feature as Feature } from "@turf/helpers";
 import PlotRow from './PlotRow'
 import { convertXmlDossierToGeoJSON } from '@/modules/codes-cultures/xml-dossier.js'
-import { parseReferences } from '@/cadastre.js'
 import { toCertificationBodySheet, ecocertExcelTemplate, basicExcelTemplate } from '@/certification-body/control-sheet.js'
-import samplePlots from '@/certification-body/sample-plots.json'
+import { convertGeofoliaFieldsToGeoJSON } from '@/certification-body/plots-sources.js'
 
 const {VUE_APP_API_ENDPOINT} = process.env;
 
@@ -332,13 +306,9 @@ function emptyPolygon () {
 }
 
 function prepareFeature ({ feature }) {
-  const { com, cadastre_suffixes = '' } = feature.properties
   const { id, geometry } = feature
 
   let surface = 0
-
-  // 26108000AN0100
-  const cadastre_references = parseReferences(cadastre_suffixes, { com })
 
   if (geometry.coordinates.length) {
     surface = parseFloat(area(geometry) / IN_HECTARES).toFixed(2)
@@ -346,7 +316,6 @@ function prepareFeature ({ feature }) {
 
   const properties = {
     ...feature.properties,
-    cadastre_references,
     surface
   }
 
@@ -413,16 +382,37 @@ export default {
   },
 
   methods: {
+    scrollToPreview () {
+      this.$nextTick(() => {
+        this.$refs.preview.scrollIntoView({behavior: "smooth"})
+      })
+    },
+
     prefillData () {
       this.isLoading = true
 
-      this.$nextTick(() => {
+      get('sample-telepac-plots.json').then(({ data }) => {
         this.inputMode = 'telepac'
         this.isLoading = false
 
-        this.operator.pacage = '2020'
+        this.operator.campagne = '2020'
         this.operator.pacage = '082020054'
-        this.plots = samplePlots
+        this.plots = data
+      })
+    },
+
+    prefillWithDummyGeofoliaData () {
+      this.isLoading = true
+
+      get('sample-geofolia-plots.json').then(({ data }) => {
+        this.inputMode = 'import'
+        this.isLoading = false
+
+        this.operator.campagne = String(data.Fields[0]?.HarvestYear)
+        this.operator.pacage = null
+        this.plots = convertGeofoliaFieldsToGeoJSON(data)
+
+        this.scrollToPreview()
       })
     },
 
@@ -750,12 +740,8 @@ export default {
     display: grid;
     grid-row-gap: 1em;
     grid-column-gap: 0;
-    grid-template-columns: repeat(7, auto);
+    grid-template-columns: repeat(6, auto);
     margin: 1em 0;
-
-    &.no-cadastre {
-      grid-template-columns: repeat(6, auto);
-    }
 
     span.header {
       font-weight: bold;
