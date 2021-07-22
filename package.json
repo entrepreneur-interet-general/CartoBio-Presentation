@@ -40,7 +40,7 @@
     "vue-router": "^3.4.9",
     "vuetify": "^1.5.24",
     "vuex": "^3.6.0",
-    "xlsx": "^0.16.9"
+    "xlsx": "^0.17.0"
   },
   "devDependencies": {
     "@jest/globals": "^26.6.2",
